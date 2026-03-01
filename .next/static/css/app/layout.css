@@ -1,0 +1,178 @@
+/*!*************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[14].oneOf[12].use[3]!./app/globals.css ***!
+  \*************************************************************************************************************************************************************************************************************************************************************/
+:root {
+  --bg: #f4f7f2;
+  --panel: #ffffff;
+  --text: #1d2a1f;
+  --muted: #5d6a60;
+  --border: #d4ded0;
+  --accent: #1f7a4f;
+  --accent-2: #124832;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(circle at top right, #e5f2e8 0, var(--bg) 45%);
+  color: var(--text);
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+a {
+  color: var(--accent-2);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.container {
+  width: min(1040px, 100% - 2rem);
+  margin: 2rem auto 3rem;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.stack {
+  display: grid;
+  grid-gap: 1rem;
+  gap: 1rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.grid {
+  display: grid;
+  grid-gap: 1rem;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+}
+
+.grid > * {
+  min-width: 0;
+}
+
+.option {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.65rem;
+  background: #fff;
+  display: grid;
+  grid-gap: 0.6rem;
+  gap: 0.6rem;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.option img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.option--selectable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.option--selectable:hover {
+  border-color: #9dc7b0;
+}
+
+.option--selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(31, 122, 79, 0.18);
+  background: #f2fbf5;
+}
+
+.option--disabled {
+  opacity: 0.65;
+}
+
+button {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  border-radius: 9px;
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--accent-2);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  padding: 0.52rem 0.62rem;
+  background: #fff;
+}
+
+label {
+  display: grid;
+  grid-gap: 0.35rem;
+  gap: 0.35rem;
+  font-size: 0.92rem;
+}
+
+.small {
+  color: var(--muted);
+  font-size: 0.87rem;
+}
+
+.error {
+  color: #a01616;
+}
+
+.success {
+  color: #0f6a39;
+}
+
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 1.2rem;
+  display: grid;
+  grid-gap: 0.6rem;
+  gap: 0.6rem;
+  justify-items: start;
+  background: #f9fcf7;
+}
+
+.dropzone--active {
+  border-color: var(--accent);
+  background: #edf8ef;
+}
+
