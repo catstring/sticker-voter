@@ -11,12 +11,20 @@ export function AuthBar() {
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (mounted) {
+    const loadSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
         setSession(data.session);
-        setLoading(false);
+      } catch {
+        if (!mounted) return;
+        setSession(null);
+      } finally {
+        if (mounted) setLoading(false);
       }
-    });
+    };
+
+    void loadSession();
 
     const {
       data: { subscription }

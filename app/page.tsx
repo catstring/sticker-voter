@@ -17,24 +17,38 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     const load = async () => {
+      if (!mounted) return;
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from("polls")
-        .select("id,title,description,status,starts_at,ends_at,max_votes_per_user,created_by,created_at")
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error: fetchError } = await supabase
+          .from("polls")
+          .select("id,title,description,status,starts_at,ends_at,max_votes_per_user,created_by,created_at")
+          .order("created_at", { ascending: false });
 
-      if (fetchError) {
-        setError(fetchError.message);
-      } else {
+        if (!mounted) return;
+        if (fetchError) {
+          setError(fetchError.message);
+          return;
+        }
         setPolls((data ?? []) as Poll[]);
+      } catch (error) {
+        if (!mounted) return;
+        setError(error instanceof Error ? error.message : "Failed to load polls.");
+      } finally {
+        if (mounted) setLoading(false);
       }
-      setLoading(false);
     };
 
     void load();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (
