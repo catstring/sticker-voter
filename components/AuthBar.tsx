@@ -27,7 +27,9 @@ export function AuthBar() {
       </div>
       {!session && showEmbeddedBrowserWarning ? (
         <div className="small" style={{ marginTop: 10 }}>
-          If Google sign-in is blocked here, open this page in Safari/Chrome first, then sign in.
+          If Google sign-in is blocked here, open this page in your browser.
+          <br />
+          如果這裡無法使用 Google 登入，請使用預設瀏覽器開啟此頁面。
         </div>
       ) : null}
     </div>
