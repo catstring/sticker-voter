@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase-browser";
+import { isEmbeddedBrowser } from "@/lib/browser-auth";
 
 type AuthContextValue = {
   session: Session | null;
@@ -52,10 +53,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signIn: async () => {
         const next = `${window.location.pathname}${window.location.search}`;
         const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
-        await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo }
-        });
+        if (isEmbeddedBrowser()) {
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: { redirectTo, skipBrowserRedirect: true }
+          });
+          if (error) throw error;
+          if (!data.url) throw new Error("Google sign-in URL was not returned.");
+
+          // In embedded browsers, opening a new tab often escapes to Safari/Chrome.
+          const opened = window.open(data.url, "_blank", "noopener,noreferrer");
+          if (!opened) {
+            window.location.assign(data.url);
+          }
+          return;
+        }
+
+        await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
       },
       signOut: async () => {
         await supabase.auth.signOut();

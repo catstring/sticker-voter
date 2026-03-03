@@ -26,6 +26,8 @@ values ('YOUR_AUTH_USER_UUID', 'admin')
 on conflict (user_id) do update set role = 'admin';
 ```
 
+Note: Google blocks OAuth inside embedded/in-app browsers (for example Threads/Instagram/Facebook webviews) with `Error 403: disallowed_useragent`. Open the app URL in Safari/Chrome to sign in.
+
 ## 2) Run locally
 
 1. Copy envs:
