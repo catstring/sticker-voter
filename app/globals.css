@@ -1,11 +1,11 @@
 :root {
-  --bg: #f4f7f2;
+  --bg: #eceff3;
   --panel: #ffffff;
-  --text: #1d2a1f;
-  --muted: #5d6a60;
-  --border: #d4ded0;
-  --accent: #1f7a4f;
-  --accent-2: #124832;
+  --text: #2b3950;
+  --muted: #5f6f86;
+  --border: #c8d0dc;
+  --accent: #496487;
+  --accent-2: #334b69;
 }
 
 * {
@@ -16,7 +16,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: radial-gradient(circle at top right, #e5f2e8 0, var(--bg) 45%);
+  background: radial-gradient(circle at top right, #dadddd 0, var(--bg) 45%);
   color: var(--text);
   font-family: "Avenir Next", "Segoe UI", sans-serif;
 }
@@ -92,13 +92,13 @@ a:hover {
 }
 
 .option--selectable:hover {
-  border-color: #9dc7b0;
+  border-color: #8196b3;
 }
 
 .option--selected {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(31, 122, 79, 0.18);
-  background: #f2fbf5;
+  box-shadow: 0 0 0 2px rgba(73, 100, 135, 0.22);
+  background: #edf2f8;
 }
 
 .option--disabled {
@@ -151,7 +151,7 @@ label {
 }
 
 .success {
-  color: #0f6a39;
+  color: #36597d;
 }
 
 .dropzone {
@@ -161,10 +161,10 @@ label {
   display: grid;
   gap: 0.6rem;
   justify-items: start;
-  background: #f9fcf7;
+  background: #f5f7fa;
 }
 
 .dropzone--active {
   border-color: var(--accent);
-  background: #edf8ef;
+  background: #eaf0f8;
 }
