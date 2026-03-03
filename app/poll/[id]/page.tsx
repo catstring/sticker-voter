@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
 import { AuthBar } from "@/components/AuthBar";
+import { useAuth } from "@/components/AuthProvider";
 import { OptionCard } from "@/components/OptionCard";
 import { supabase } from "@/lib/supabase-browser";
 import type { Poll, PollOptionResult } from "@/lib/types";
@@ -24,11 +24,12 @@ function publicImage(path: string) {
 export default function PollPage() {
   const params = useParams<{ id: string }>();
   const pollId = params.id;
+  const { session, loading: authLoading } = useAuth();
 
-  const [session, setSession] = useState<Session | null>(null);
   const [poll, setPoll] = useState<Poll | null>(null);
   const [options, setOptions] = useState<PollOptionResult[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
+  const [pollLoading, setPollLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,76 +43,62 @@ export default function PollPage() {
     return map;
   }, [options]);
 
-  const loadSession = async () => {
-    const { data } = await supabase.auth.getSession();
-    setSession(data.session);
-    return data.session;
-  };
-
   const loadPoll = async (userId?: string) => {
     setError(null);
+    setPollLoading(true);
 
-    const [{ data: pollData, error: pollError }, { data: optionData, error: optionError }] = await Promise.all([
-      supabase
-        .from("polls")
-        .select("id,title,description,status,starts_at,ends_at,max_votes_per_user,created_by,created_at")
-        .eq("id", pollId)
-        .maybeSingle(),
-      supabase
-        .from("poll_option_results")
-        .select("poll_id,option_id,title,image_path,display_order,vote_count")
-        .eq("poll_id", pollId)
-        .order("display_order", { ascending: true })
-    ]);
+    try {
+      const [{ data: pollData, error: pollError }, { data: optionData, error: optionError }] = await Promise.all([
+        supabase
+          .from("polls")
+          .select("id,title,description,status,starts_at,ends_at,max_votes_per_user,created_by,created_at")
+          .eq("id", pollId)
+          .maybeSingle(),
+        supabase
+          .from("poll_option_results")
+          .select("poll_id,option_id,title,image_path,display_order,vote_count")
+          .eq("poll_id", pollId)
+          .order("display_order", { ascending: true })
+      ]);
 
-    if (pollError) {
-      setError(pollError.message);
-      return;
-    }
-    if (optionError) {
-      setError(optionError.message);
-      return;
-    }
+      if (pollError) {
+        setError(pollError.message);
+        setPoll(null);
+        setOptions([]);
+        setSelected([]);
+        return;
+      }
+      if (optionError) {
+        setError(optionError.message);
+        setPoll(null);
+        setOptions([]);
+        setSelected([]);
+        return;
+      }
 
-    setPoll((pollData ?? null) as Poll | null);
-    setOptions((optionData ?? []) as PollOptionResult[]);
+      setPoll((pollData ?? null) as Poll | null);
+      setOptions((optionData ?? []) as PollOptionResult[]);
 
-    if (userId) {
-      const { data: voteRows } = await supabase
-        .from("votes")
-        .select("option_id")
-        .eq("poll_id", pollId)
-        .eq("user_id", userId);
+      if (userId) {
+        const { data: voteRows } = await supabase
+          .from("votes")
+          .select("option_id")
+          .eq("poll_id", pollId)
+          .eq("user_id", userId);
 
-      setSelected((voteRows ?? []).map((row) => row.option_id));
-    } else {
-      setSelected([]);
+        setSelected((voteRows ?? []).map((row) => row.option_id));
+      } else {
+        setSelected([]);
+      }
+    } finally {
+      setPollLoading(false);
     }
   };
 
   useEffect(() => {
-    let alive = true;
-
-    const init = async () => {
-      const initialSession = await loadSession();
-      if (!alive) return;
-      await loadPoll(initialSession?.user.id);
-    };
-
-    void init();
-
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange(async (_e, nextSession) => {
-      setSession(nextSession);
-      await loadPoll(nextSession?.user.id);
-    });
-
-    return () => {
-      alive = false;
-      subscription.unsubscribe();
-    };
-  }, [pollId]);
+    if (authLoading) return;
+    void loadPoll(session?.user.id);
+  }, [authLoading, pollId, session?.user.id]);
 
   const toggle = (optionId: string) => {
     setMessage(null);
@@ -152,10 +139,11 @@ export default function PollPage() {
       <AuthBar />
       <div className="row">
         <Link href="/">Back</Link>
-        <Link href="/admin">Admin</Link>
+        {/* <Link href="/admin">Admin</Link> */}
       </div>
 
-      {!poll ? <div className="card">Loading poll...</div> : null}
+      {pollLoading || authLoading ? <div className="card">Loading poll...</div> : null}
+      {!pollLoading && !authLoading && !poll ? <div className="card">Poll not found or not accessible.</div> : null}
       {poll ? (
         <div className="card stack">
           <h1>{poll.title}</h1>
@@ -179,7 +167,7 @@ export default function PollPage() {
           </button>
         </div>
 
-        {!session ? <div className="small">Sign in with Google to submit votes.</div> : null}
+        {!authLoading && !session ? <div className="small">Sign in with Google to submit votes.</div> : null}
         {!open ? <div className="small">Voting is currently closed for this poll.</div> : null}
 
         <div className="grid">

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
 import { AuthBar } from "@/components/AuthBar";
+import { useAuth } from "@/components/AuthProvider";
 import { OptionCard } from "@/components/OptionCard";
 import { supabase } from "@/lib/supabase-browser";
 import type { Poll, PollOptionResult } from "@/lib/types";
@@ -52,7 +52,8 @@ function publicImage(path: string) {
 }
 
 export default function AdminPage() {
-  const [session, setSession] = useState<Session | null>(null);
+  const { session, loading: authLoading } = useAuth();
+  const [isLoadingAdminState, setIsLoadingAdminState] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [polls, setPolls] = useState<Poll[]>([]);
   const [pollStats, setPollStats] = useState<Record<string, PollStats>>({});
@@ -131,60 +132,64 @@ export default function AdminPage() {
   };
 
   const loadAdminState = async () => {
+    setIsLoadingAdminState(true);
     setError(null);
+    try {
+      if (!session?.user) {
+        setIsAdmin(false);
+        setPolls([]);
+        setPollStats({});
+        setSelectedPollId("");
+        setSelectedPollOptions([]);
+        return;
+      }
 
-    const { data: authData } = await supabase.auth.getSession();
-    const currentSession = authData.session;
-    setSession(currentSession);
+      const { data: roleData, error: roleError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
 
-    if (!currentSession?.user) {
-      setIsAdmin(false);
-      setPolls([]);
-      setPollStats({});
-      return;
+      if (roleError) {
+        setError(roleError.message);
+        setIsAdmin(false);
+        return;
+      }
+
+      const admin = roleData?.role === "admin";
+      setIsAdmin(admin);
+
+      if (!admin) {
+        setPolls([]);
+        setPollStats({});
+        setSelectedPollId("");
+        setSelectedPollOptions([]);
+        return;
+      }
+
+      const { data: pollData, error: pollError } = await supabase
+        .from("polls")
+        .select("id,title,description,status,starts_at,ends_at,max_votes_per_user,created_by,created_at")
+        .order("created_at", { ascending: false });
+
+      if (pollError) {
+        setError(pollError.message);
+        return;
+      }
+
+      const list = (pollData ?? []) as Poll[];
+      setPolls(list);
+
+      if (!selectedPollId && list[0]) {
+        setSelectedPollId(list[0].id);
+      } else if (selectedPollId && !list.some((p) => p.id === selectedPollId)) {
+        setSelectedPollId(list[0]?.id ?? "");
+      }
+
+      await loadPollStats(list.map((poll) => poll.id));
+    } finally {
+      setIsLoadingAdminState(false);
     }
-
-    const { data: roleData, error: roleError } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", currentSession.user.id)
-      .maybeSingle();
-
-    if (roleError) {
-      setError(roleError.message);
-      setIsAdmin(false);
-      return;
-    }
-
-    const admin = roleData?.role === "admin";
-    setIsAdmin(admin);
-
-    if (!admin) {
-      setPolls([]);
-      setPollStats({});
-      return;
-    }
-
-    const { data: pollData, error: pollError } = await supabase
-      .from("polls")
-      .select("id,title,description,status,starts_at,ends_at,max_votes_per_user,created_by,created_at")
-      .order("created_at", { ascending: false });
-
-    if (pollError) {
-      setError(pollError.message);
-      return;
-    }
-
-    const list = (pollData ?? []) as Poll[];
-    setPolls(list);
-
-    if (!selectedPollId && list[0]) {
-      setSelectedPollId(list[0].id);
-    } else if (selectedPollId && !list.some((p) => p.id === selectedPollId)) {
-      setSelectedPollId(list[0]?.id ?? "");
-    }
-
-    await loadPollStats(list.map((poll) => poll.id));
   };
 
   const loadSelectedPollOptions = async (pollId: string) => {
@@ -212,18 +217,9 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    if (authLoading) return;
     void loadAdminState();
-
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange(async () => {
-      await loadAdminState();
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  }, [authLoading, session?.user?.id]);
 
   useEffect(() => {
     if (!isAdmin || !selectedPollId) {
@@ -471,10 +467,11 @@ export default function AdminPage() {
       {error ? <div className="card error">{error}</div> : null}
       {message ? <div className="card success">{message}</div> : null}
 
-      {!session ? <div className="card">Sign in first.</div> : null}
-      {session && !isAdmin ? <div className="card">Your account is not admin.</div> : null}
+      {authLoading || isLoadingAdminState ? <div className="card">Checking access...</div> : null}
+      {!authLoading && !isLoadingAdminState && !session ? <div className="card">Sign in first.</div> : null}
+      {!authLoading && !isLoadingAdminState && session && !isAdmin ? <div className="card">Your account is not admin.</div> : null}
 
-      {session && isAdmin ? (
+      {!authLoading && !isLoadingAdminState && session && isAdmin ? (
         <>
           <form className="card stack" onSubmit={createPoll}>
             <h2>Create Poll</h2>

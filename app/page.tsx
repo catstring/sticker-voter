@@ -56,7 +56,7 @@ export default function HomePage() {
       <AuthBar />
       <div className="row">
         <h1>Open Polls</h1>
-        <Link href="/admin">Admin</Link>
+        {/* <Link href="/admin">Admin</Link> */}
       </div>
 
       {loading ? <div className="card">Loading polls...</div> : null}

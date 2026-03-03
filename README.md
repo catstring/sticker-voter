@@ -15,8 +15,9 @@ Core voting rules already implemented:
 1. Create a Supabase project.
 2. Open SQL Editor and run [`supabase/schema.sql`](./supabase/schema.sql).
 3. In **Authentication > Providers**, enable Google and set redirect URLs:
-   - local: `http://localhost:3000`
-   - production: your Vercel domain
+   - local app origins: `http://localhost:3000` and `http://localhost:3001` (if you use both)
+   - local callback URLs: `http://localhost:3000/auth/callback` and `http://localhost:3001/auth/callback`
+   - production callback URL: `https://YOUR_DOMAIN/auth/callback`
 4. Promote your account to admin (replace with your user UUID):
 
 ```sql
